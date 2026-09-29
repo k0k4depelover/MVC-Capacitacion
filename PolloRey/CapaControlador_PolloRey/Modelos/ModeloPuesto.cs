@@ -1,17 +1,18 @@
-﻿using System;
+﻿using CapaModelo_PolloRey.Modelos;
+using CapaModelo_PolloRey.Repositorios;
+using CapaModelo_PolloRey.RepositoriosGenericos;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
-using CapaModelo_PolloRey.Modelos;
-using CapaModelo_PolloRey.RepositoriosGenericos;
 using Xunit.Sdk;
 
 namespace CapaControlador_PolloRey.Modelos
 {
-    class ModeloPuesto
+    public class ModeloPuesto
     {
         private int _idPuesto;
         private string _nombrePuesto;
@@ -21,8 +22,15 @@ namespace CapaControlador_PolloRey.Modelos
         private IRepositorioPuesto _repositorioPuesto;
 
         public EstadoEntidad Estado { private get; set; }
+        private List<ModeloPuesto> ListaPuestos;
+
+        public ModeloPuesto()
+        {
+            _repositorioPuesto = new RepositorioPuesto();
+        }
 
         public int IdPuesto { get => _idPuesto; set => _idPuesto = value; }
+
 
 
         [Required(ErrorMessage = "El nombre del puesto es obligatorio.")]
@@ -41,10 +49,10 @@ namespace CapaControlador_PolloRey.Modelos
         public float SalarioPuesto { get => _salarioPuesto; set => _salarioPuesto = value; }
 
         public DateTime FechaCreacion { get => _fechaCreacion; }
-    
 
 
-    public string Guardar()
+
+        public string Guardar()
         {
             string messaje = string.Empty;
 
@@ -89,6 +97,37 @@ namespace CapaControlador_PolloRey.Modelos
 
 
             return messaje;
+        }
+
+
+
+
+
+        public List<ModeloPuesto> ObtenerTodos()
+        {
+            var puestos = _repositorioPuesto.Read();
+            var modelosPuestos = new List<ModeloPuesto>();
+            foreach (var puesto in puestos)
+            {
+                var modeloPuesto = new ModeloPuesto
+                {
+                    _idPuesto = puesto.IdPuesto,
+                    _nombrePuesto = puesto.NombrePuesto,
+                    _descripcionPuesto = puesto.DescripcionPuesto,
+                    _salarioPuesto = puesto.SalarioPuesto,
+                    // FechaCreacion = puesto.FechaCreacion // Assuming FechaCreacion is set in the constructor or elsewhere
+                };
+                modelosPuestos.Add(modeloPuesto);
+            }
+            return modelosPuestos;
+        }
+
+
+
+
+        public IEnumerable<ModeloPuesto> ObtenerPorId(string filter)
+        {
+            return ListaPuestos.FindAll(e => e.IdPuesto.ToString().Contains(filter) || e._nombrePuesto.Contains(filter));
         }
 
     }

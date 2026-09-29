@@ -95,5 +95,7 @@ namespace CapaModelo_PolloRey.Repositorios
 
             return EjecutarNoQuery(update, _parametros, CommandType.Text);
         }
-    }
+    
+
 }
+    }

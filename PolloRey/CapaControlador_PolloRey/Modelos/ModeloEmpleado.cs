@@ -1,6 +1,7 @@
 ﻿using CapaModelo_PolloRey.Modelos;
 using CapaModelo_PolloRey.RepositoriosGenericos;
 using System;
+using CapaModelo_PolloRey.Repositorios;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -20,10 +21,17 @@ namespace CapaControlador_PolloRey.Modelos
         private DateTime _cumpleanosEmpleado;
         private string _sucursal;
         private int _idPuesto;
+        private int _edad;
         private DateTime _fechaCreacion;
         private IRepositorioEmpleado _repositorioEmpleado;
-
+        private List<ModeloEmpleado> ListaEmpleados;
         public EstadoEntidad Estado { private get; set; }
+
+
+        public ModeloEmpleado()
+        {
+            _repositorioEmpleado = new RepositorioEmpleado();
+        }
 
         public int IdEmpleado
         {
@@ -98,12 +106,14 @@ namespace CapaControlador_PolloRey.Modelos
             set => _idPuesto = value;
         }
 
+        public int Edad { get => _edad; private set => _edad = value; }
+
         // Se asigna automáticamente por MySQL
         public DateTime FechaCreacion
         {
             get => _fechaCreacion;
         }
-    
+
 
 
         public string GuardarCambios()
@@ -113,6 +123,7 @@ namespace CapaControlador_PolloRey.Modelos
             {
                 var modeloDatosEmpleados = new Empleado
                 {
+                    IdEmpleado = _idEmpleado,
                     NombreEmpleado = _nombreEmpleado,
                     ApellidoEmpleado = _apellidoEmpleado,
                     TelefonoEmpleado = _telefonoEmpleado,
@@ -148,7 +159,61 @@ namespace CapaControlador_PolloRey.Modelos
 
         }
 
+        public List<ModeloEmpleado> ObtenerTodos()
+        {
+            try
+            {
+                var modeloDatosEmpleados = _repositorioEmpleado.Read();
+                List<ModeloEmpleado> listaEmpleados = new List<ModeloEmpleado>();
+
+                foreach (var empleado in modeloDatosEmpleados)
+                {
+                    listaEmpleados.Add(new ModeloEmpleado
+                    {
+                        _idEmpleado = empleado.IdEmpleado,
+                        _nombreEmpleado = empleado.NombreEmpleado,
+                        _apellidoEmpleado = empleado.ApellidoEmpleado,
+                        _telefonoEmpleado = empleado.TelefonoEmpleado,
+                        _correoEmpleado = empleado.CorreoEmpleado,
+                        _dpiEmpleado = empleado.DpiEmpleado,
+                        _cumpleanosEmpleado = empleado.CumpleanosEmpleado,
+
+                        _sucursal = empleado.Sucursal,
+                        _edad = CalcularEdad(empleado.CumpleanosEmpleado),
+                        _idPuesto = empleado.IdPuesto,
+                        _fechaCreacion = empleado.FechaCreacion
+                    });
+                }
+                this.ListaEmpleados = listaEmpleados;
+                return listaEmpleados;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error al obtener empleados: {ex.Message}");
+            }
+
+
+        }
+
+
+        private int CalcularEdad(DateTime fechaNacimiento)
+        {
+            DateTime fechaActual = DateTime.Today;
+            int edad = fechaActual.Year - fechaNacimiento.Year;
+            if (fechaNacimiento.Date > fechaActual.AddYears(-edad))
+            {
+                edad--;
+            }
+            return edad;
+        }
+
+
+        public IEnumerable<ModeloEmpleado> ObtenerPorId(string filter)
+        {
+            return ListaEmpleados.FindAll(e => e.IdEmpleado.ToString().|(filter) || e._nombreEmpleado.Contains(filter));
+        }
+
+
 
     }
-
 }

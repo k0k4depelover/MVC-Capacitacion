@@ -12,7 +12,7 @@ namespace CapaModelo_PolloRey.Conexion
         public readonly string conectionString;
         public ConectionString()
         {
-            conectionString = "Dsb=MYSQL_REMOTE";
+            conectionString = "Dsn=MYSQL_REMOTE";
         }
 
         protected OdbcConnection GetConnection()
