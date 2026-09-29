@@ -210,7 +210,7 @@ namespace CapaControlador_PolloRey.Modelos
 
         public IEnumerable<ModeloEmpleado> ObtenerPorId(string filter)
         {
-            return ListaEmpleados.FindAll(e => e.IdEmpleado.ToString().|(filter) || e._nombreEmpleado.Contains(filter));
+            return ListaEmpleados.FindAll(e => e.IdEmpleado.ToString().Contains(filter) || e._nombreEmpleado.Contains(filter));
         }
 
 

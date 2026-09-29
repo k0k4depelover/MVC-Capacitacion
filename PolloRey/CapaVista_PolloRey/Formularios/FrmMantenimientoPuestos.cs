@@ -3,7 +3,6 @@ using CapaControlador_PolloRey.Modelos;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Data;
 using System.Linq;
 using System.Windows.Forms;
 
@@ -17,6 +16,9 @@ namespace CapaVista_PolloRey.Formularios
         {
             InitializeComponent();
             panIngresoDatos.Enabled = false;
+
+            // Asegura que el evento Load se enlace aunque no esté en el diseñador
+            this.Load += FrmMantenimientoPuestos_Load;
         }
 
         private void FrmMantenimientoPuestos_Load(object sender, EventArgs e)
@@ -28,11 +30,17 @@ namespace CapaVista_PolloRey.Formularios
         {
             try
             {
-                GridPuestos.DataSource = modeloPuesto.ObtenerTodos();
+                GridPuestos.AutoGenerateColumns = true;
+                var datos = modeloPuesto.ObtenerTodos();
+
+                // Limpiar enlace anterior y asignar nueva lista
+                GridPuestos.DataSource = null;
+                GridPuestos.DataSource = datos;
+                GridPuestos.Refresh();
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error al cargar los puestos: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Error al cargar los puestos: " + ex.Message, "Error de Datos", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -46,7 +54,7 @@ namespace CapaVista_PolloRey.Formularios
 
         private void btnEditar_Click(object sender, EventArgs e)
         {
-            if (GridPuestos.SelectedRows.Count > 0)
+            if (GridPuestos.CurrentRow != null && GridPuestos.CurrentRow.Index >= 0)
             {
                 panIngresoDatos.Enabled = true;
                 modeloPuesto.Estado = EstadoEntidad.Modificado;
@@ -56,16 +64,17 @@ namespace CapaVista_PolloRey.Formularios
                 textBoxPuesto.Text = fila.Cells["NombrePuesto"].Value?.ToString();
                 textBoxDescripcion.Text = fila.Cells["DescripcionPuesto"].Value?.ToString();
                 textBoxSalario.Text = fila.Cells["SalarioPuesto"].Value?.ToString();
+                textBoxPuesto.Focus();
             }
             else
             {
-                MessageBox.Show("Seleccione un puesto de la lista para editar.", "Atención", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Seleccione un puesto de la tabla para editar.", "Atención", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 
         private void btnBorrar_Click(object sender, EventArgs e)
         {
-            if (GridPuestos.SelectedRows.Count > 0)
+            if (GridPuestos.CurrentRow != null && GridPuestos.CurrentRow.Index >= 0)
             {
                 var dialog = MessageBox.Show("¿Está seguro de eliminar el puesto seleccionado?", "Confirmación", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
                 if (dialog == DialogResult.Yes)
@@ -83,7 +92,7 @@ namespace CapaVista_PolloRey.Formularios
             }
             else
             {
-                MessageBox.Show("Seleccione un puesto para eliminar.", "Atención", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Seleccione un puesto de la tabla para eliminar.", "Atención", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 
@@ -91,7 +100,6 @@ namespace CapaVista_PolloRey.Formularios
         {
             try
             {
-                // Asignar datos del formulario al modelo
                 modeloPuesto.NombrePuesto = textBoxPuesto.Text.Trim();
                 modeloPuesto.DescripcionPuesto = textBoxDescripcion.Text.Trim();
 
@@ -101,22 +109,21 @@ namespace CapaVista_PolloRey.Formularios
                 }
                 else
                 {
-                    MessageBox.Show("El salario debe ser un valor numérico válido.", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show("El salario debe ser un valor numérico válido (ej. 4500.00).", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
-                // Validación de DataAnnotations
+                // Validación mediante DataAnnotations
                 var contexto = new ValidationContext(modeloPuesto, null, null);
                 var listaErrores = new List<ValidationResult>();
 
                 if (!Validator.TryValidateObject(modeloPuesto, contexto, listaErrores, true))
                 {
                     string errores = string.Join("\n", listaErrores.Select(r => r.ErrorMessage));
-                    MessageBox.Show(errores, "Datos inválidos", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show(errores, "Validación requerida", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
-                // Persistir en base de datos
                 string respuesta = modeloPuesto.Guardar();
                 MessageBox.Show(respuesta, "Información", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
@@ -134,7 +141,9 @@ namespace CapaVista_PolloRey.Formularios
         {
             try
             {
+                GridPuestos.DataSource = null;
                 GridPuestos.DataSource = modeloPuesto.ObtenerPorId(textBoxBuscar.Text.Trim());
+                GridPuestos.Refresh();
             }
             catch (Exception ex)
             {
